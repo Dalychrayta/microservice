@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using Prometheus;
 using Steeltoe.Discovery.Client;
 using Steeltoe.Discovery.Eureka;
 using VehicleService.Data;
@@ -186,10 +187,12 @@ app.UseSwaggerUI(c =>
     c.RoutePrefix = "swagger";
 });
 
+app.UseHttpMetrics();
 app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+app.MapMetrics();
 
 // Endpoint de santé pour Docker/Eureka
 app.MapGet("/actuator/health", () => Results.Ok(new { status = "UP" }));

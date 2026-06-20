@@ -3,6 +3,16 @@ global:
   evaluation_interval: 15s
 
 scrape_configs:
+  - job_name: config-server
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets: ["config-server:8888"]
+
+  - job_name: eureka-server
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets: ["eureka-server:8761"]
+
   - job_name: gateway
     metrics_path: /actuator/prometheus
     static_configs:
@@ -12,4 +22,9 @@ scrape_configs:
     metrics_path: /actuator/prometheus
     static_configs:
       - targets: ["rental-service:8081"]
+
+  - job_name: vehicle-service
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["vehicle-service:8082"]
 

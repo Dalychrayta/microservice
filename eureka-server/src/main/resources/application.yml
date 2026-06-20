@@ -25,3 +25,9 @@ eureka:
     # Ce mode empêche Eureka de supprimer les services
     # s'il pense que le réseau est en panne.
     enable-self-preservation: false
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus

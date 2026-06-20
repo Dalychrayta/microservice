@@ -25,6 +25,9 @@
 
     <!-- JWT Authentication : validation des tokens Keycloak -->
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.5" />
+
+    <!-- Prometheus metrics endpoint for Grafana/Prometheus dashboards -->
+    <PackageReference Include="prometheus-net.AspNetCore" Version="8.2.1" />
   </ItemGroup>
 
 </Project>
