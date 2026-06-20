@@ -18,6 +18,7 @@
 - [Sécurité Keycloak](#sécurité-keycloak)
 - [CI/CD GitHub Actions](#cicd-github-actions)
 - [Monitoring](#monitoring)
+- [Kubernetes](#kubernetes)
 
 ---
 
@@ -446,16 +447,40 @@ Fichiers:
 
 ---
 
-- ✅ **CI/CD GitHub Actions** : pipeline multi-stack Java/.NET/Frontend
-- ✅ **Monitoring Prometheus + Grafana** : métriques centralisées et visualisation
+## Kubernetes
+
+Manifests fournis dans `k8s/` pour orchestration, load balancing et tolérance aux pannes:
+
+- `k8s/gateway.yaml` (Deployment x2 + Service + HPA)
+- `k8s/rental-service.yaml` (Deployment x2 + Service + HPA)
+- `k8s/vehicle-service.yaml` (Deployment x2 + Service)
+- `k8s/frontend.yaml` (Deployment x2 + Service LoadBalancer)
+- `k8s/namespace.yaml`
+- `k8s/kustomization.yaml`
+
+Déploiement:
+
+```bash
+kubectl apply -k k8s/
+kubectl get pods -n carrental
+kubectl get svc -n carrental
+kubectl get hpa -n carrental
+```
+
+Ce pack couvre:
+
+- Orchestration: Deployments Kubernetes
+- Load balancing: Services Kubernetes
+- Tolérance aux pannes: replicas + probes + auto-scaling HPA
+
+---
 
 ### Déploiement cloud / Kubernetes (bonus recommandé)
 
-Le projet est prêt pour une extension cloud/k8s (KillerCoda, AWS, etc.) en étape suivante:
+Exemples plateformes de test:
 
-- Déploiement Docker Compose sur VM cloud
-- Migration vers manifests Kubernetes (Deployments/Services/Ingress)
-- Ajout HPA pour auto-scaling et tolérance aux pannes
+- KillerCoda (Kubernetes sandbox)
+- AWS (EC2 + Docker Compose, ou EKS)
 
 ---
 
@@ -480,3 +505,6 @@ Le projet est prêt pour une extension cloud/k8s (KillerCoda, AWS, etc.) en éta
 - ✅ **Health checks** : tous les services exposent `/actuator/health`
 - ✅ **Docker multi-stage** : images légères (Alpine) pour la production
 - ✅ **Seed data** : 5 véhicules pré-chargés au démarrage via Entity Framework
+- ✅ **CI/CD GitHub Actions** : pipeline multi-stack Java/.NET/Frontend
+- ✅ **Monitoring Prometheus + Grafana** : métriques centralisées et visualisation
+- ✅ **Kubernetes** : orchestration, load balancing, HPA et probes de santé
