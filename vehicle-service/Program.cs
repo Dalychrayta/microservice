@@ -87,7 +87,8 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             // Valide que le token est bien destiné à notre application
             ValidateAudience = false,
             // Valide que le token vient bien de Keycloak
-            ValidateIssuer = false,
+            ValidateIssuer = true,
+            ValidIssuer = builder.Configuration["Keycloak:ValidIssuer"],
             RoleClaimType = ClaimTypes.Role
         };
 

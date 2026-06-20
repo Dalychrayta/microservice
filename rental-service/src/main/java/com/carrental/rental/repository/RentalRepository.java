@@ -5,6 +5,7 @@ import com.carrental.rental.entity.RentalStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -31,7 +32,12 @@ public interface RentalRepository extends JpaRepository<Rental, Long> {
     // SELECT * FROM rentals WHERE status = ?
     List<Rental> findByStatus(RentalStatus status);
 
-    // Vérifie si une voiture est déjà réservée sur une période
-    // (utilisé pour la vérification de disponibilité)
-    boolean existsByVehicleIdAndStatusIn(Long vehicleId, List<RentalStatus> statuses);
+    // Vérifie le chevauchement de période pour une voiture donnée.
+    // start <= newEnd AND end >= newStart  => conflit de réservation
+    boolean existsByVehicleIdAndStatusInAndStartDateLessThanEqualAndEndDateGreaterThanEqual(
+            Long vehicleId,
+            List<RentalStatus> statuses,
+            LocalDate endDate,
+            LocalDate startDate
+    );
 }
