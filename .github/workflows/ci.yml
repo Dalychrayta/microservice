@@ -1,0 +1,68 @@
+name: CI
+
+on:
+  push:
+    branches: ["main", "rent-car"]
+  pull_request:
+    branches: ["main", "rent-car"]
+
+jobs:
+  java-build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service: [config-server, eureka-server, gateway, rental-service]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: maven
+
+      - name: Build Java service
+        working-directory: ./${{ matrix.service }}
+        run: mvn -B -DskipTests package
+
+  dotnet-build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Restore
+        working-directory: ./vehicle-service
+        run: dotnet restore
+
+      - name: Build
+        working-directory: ./vehicle-service
+        run: dotnet build --configuration Release --no-restore
+
+  frontend-build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: ./frontend
+        run: npm install
+
+      - name: Build frontend
+        working-directory: ./frontend
+        run: npm run build
