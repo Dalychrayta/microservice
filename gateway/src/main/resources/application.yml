@@ -65,10 +65,10 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          # jwk-set-uri only — no issuer validation
-          # Token issuer is localhost:8180 but gateway resolves keycloak:8180 (Docker internal)
-          # Using issuer-uri causes 401 due to hostname mismatch
+          # Signature verification via Keycloak JWK set
           jwk-set-uri: http://keycloak:8180/realms/car-rental/protocol/openid-connect/certs
+          # Strict issuer validation (browser-facing issuer)
+          expected-issuer: http://localhost:8180/realms/car-rental
 
 # Eureka
 eureka:
@@ -83,7 +83,7 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info,gateway
+        include: health,info,gateway,prometheus
   endpoint:
     gateway:
       enabled: true  # Expose les routes de la Gateway via /actuator/gateway/routes

@@ -50,3 +50,9 @@ spring:
 
       default-filters:
         - AddResponseHeader=X-Response-By, CarRental-Gateway
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,gateway,prometheus

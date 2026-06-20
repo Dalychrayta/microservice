@@ -97,6 +97,12 @@
             <artifactId>spring-boot-starter-actuator</artifactId>
         </dependency>
 
+        <!-- Export des métriques au format Prometheus -->
+        <dependency>
+            <groupId>io.micrometer</groupId>
+            <artifactId>micrometer-registry-prometheus</artifactId>
+        </dependency>
+
         <!-- SpringDoc : génère la documentation Swagger automatiquement -->
         <dependency>
             <groupId>org.springdoc</groupId>

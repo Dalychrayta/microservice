@@ -11,9 +11,10 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          # Use jwk-set-uri to avoid issuer hostname mismatch
-          # Token issuer is localhost:8180 but service resolves keycloak:8180 (Docker internal)
+          # Signature verification via Keycloak JWK set
           jwk-set-uri: http://keycloak:8180/realms/car-rental/protocol/openid-connect/certs
+          # Strict issuer validation (browser-facing issuer)
+          expected-issuer: http://localhost:8180/realms/car-rental
 
 # Enregistrement dans Eureka
 eureka:
@@ -35,4 +36,4 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info,metrics
+        include: health,info,metrics,prometheus

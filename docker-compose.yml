@@ -6,6 +6,7 @@ volumes:
   mysql-data:
   postgres-data:
   keycloak-data:
+  grafana-data:
 
 services:
 
@@ -239,3 +240,35 @@ services:
       - carrental-network
     depends_on:
       - gateway
+
+  prometheus:
+    image: prom/prometheus:v2.54.1
+    container_name: prometheus
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    ports:
+      - "9090:9090"
+    networks:
+      - carrental-network
+    depends_on:
+      gateway:
+        condition: service_started
+      rental-service:
+        condition: service_started
+
+  grafana:
+    image: grafana/grafana:11.2.2
+    container_name: grafana
+    ports:
+      - "3001:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+    volumes:
+      - grafana-data:/var/lib/grafana
+    networks:
+      - carrental-network
+    depends_on:
+      - prometheus
