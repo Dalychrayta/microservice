@@ -17,6 +17,7 @@
 - [Communication entre microservices](#communication-entre-microservices)
 - [Sécurité Keycloak](#sécurité-keycloak)
 - [CI/CD GitHub Actions](#cicd-github-actions)
+- [Monitoring](#monitoring)
 
 ---
 
@@ -258,6 +259,7 @@ Tous les appels passent par la **Gateway** sur `http://localhost:8080`
 | GET | `/api/rentals/{id}` | Authentifié | Détails d'une réservation |
 | PUT | `/api/rentals/{id}/confirm` | ADMIN/AGENT | Confirmer une réservation |
 | PUT | `/api/rentals/{id}/cancel` | Authentifié | Annuler une réservation |
+| PUT | `/api/rentals/{id}/complete` | ADMIN/AGENT | Terminer une réservation |
 
 ---
 
@@ -287,6 +289,18 @@ Admin ──PUT /api/rentals/{id}/confirm──► rental-service
                                               │ Feign: GET /api/vehicles/{id}
                                               ▼
                                         vehicle-service (vérification)
+```
+
+**Scénario 3 : Consulter les locations enrichies**
+```
+Admin/Agent ──GET /api/rentals──► rental-service
+             │
+             │ Feign (boucle): GET /api/vehicles/{id} pour chaque location
+             ▼
+           vehicle-service
+             │ Retourne brand/model/prix
+             ▼
+           rental-service renvoie une réponse enrichie
 ```
 
 ### Communication Asynchrone — RabbitMQ
@@ -320,6 +334,20 @@ rental-service annule réservation
               vehicle-service (consumer)
               remet available = true pour le véhicule
 ```
+
+          **Scénario 3 : Fin de location**
+          ```
+          rental-service termine réservation (PUT /api/rentals/{id}/complete)
+              │
+              │ Publie dans: rental.exchange
+              │ Routing key: rental.completed
+              ▼
+            RabbitMQ ──► rental-completed-queue
+                     │
+                     ▼
+                  vehicle-service (consumer)
+                  remet available = true en fin de location
+          ```
 
 ---
 
@@ -398,6 +426,36 @@ Déclenchement:
 
 - `push` sur `main` et `rent-car`
 - `pull_request` vers `main` et `rent-car`
+
+---
+
+## Monitoring
+
+Stack ajouté pour la supervision locale:
+
+- Prometheus: `http://localhost:9090`
+- Grafana: `http://localhost:3001` (`admin` / `admin`)
+- Cible scrape Spring Actuator:
+  - Gateway: `gateway:8080/actuator/prometheus`
+  - Rental-service: `rental-service:8081/actuator/prometheus`
+
+Fichiers:
+
+- `monitoring/prometheus.yml`
+- `docker-compose.yml` (services `prometheus` et `grafana`)
+
+---
+
+- ✅ **CI/CD GitHub Actions** : pipeline multi-stack Java/.NET/Frontend
+- ✅ **Monitoring Prometheus + Grafana** : métriques centralisées et visualisation
+
+### Déploiement cloud / Kubernetes (bonus recommandé)
+
+Le projet est prêt pour une extension cloud/k8s (KillerCoda, AWS, etc.) en étape suivante:
+
+- Déploiement Docker Compose sur VM cloud
+- Migration vers manifests Kubernetes (Deployments/Services/Ingress)
+- Ajout HPA pour auto-scaling et tolérance aux pannes
 
 ---
 
