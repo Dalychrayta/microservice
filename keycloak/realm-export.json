@@ -3,8 +3,9 @@
   "displayName": "Car Rental Platform",
   "enabled": true,
   "sslRequired": "none",
-  "registrationAllowed": true,
+  "registrationAllowed": false,
   "loginWithEmailAllowed": true,
+  "loginTheme": "carrental-modern",
 
   "roles": {
     "realm": [

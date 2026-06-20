@@ -5,7 +5,6 @@ networks:
 volumes:
   mysql-data:
   postgres-data:
-  rabbitmq-data:
   keycloak-data:
 
 services:
@@ -58,8 +57,6 @@ services:
     ports:
       - "5672:5672"
       - "15672:15672"
-    volumes:
-      - rabbitmq-data:/var/lib/rabbitmq
     networks:
       - carrental-network
     healthcheck:
@@ -85,6 +82,7 @@ services:
       - "8180:8180"
     volumes:
       - ./keycloak/realm-export.json:/opt/keycloak/data/import/realm-export.json
+      - ./keycloak/themes:/opt/keycloak/themes
     networks:
       - carrental-network
     depends_on:

@@ -1,0 +1,43 @@
+:root {
+  --pf-v5-global--primary-color--100: #1d4ed8;
+  --pf-v5-global--primary-color--200: #1e40af;
+  --pf-v5-global--active-color--100: #0f766e;
+}
+
+body {
+  background:
+    radial-gradient(circle at 10% 20%, rgba(37, 99, 235, 0.2), transparent 35%),
+    radial-gradient(circle at 85% 10%, rgba(20, 184, 166, 0.2), transparent 30%),
+    linear-gradient(135deg, #0f172a 0%, #1e293b 40%, #0f766e 100%) !important;
+}
+
+.kcLoginClass {
+  font-family: "Space Grotesk", "Segoe UI", sans-serif;
+}
+
+.login-pf-page .card-pf,
+.pf-v5-c-login__main {
+  border-radius: 18px !important;
+  border: 1px solid rgba(255, 255, 255, 0.18) !important;
+  box-shadow: 0 18px 45px rgba(2, 6, 23, 0.35) !important;
+  backdrop-filter: blur(4px);
+}
+
+#kc-header-wrapper,
+.pf-v5-c-login__main-header h1 {
+  color: #e2e8f0 !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.02em;
+}
+
+.pf-v5-c-button.pf-m-primary,
+#kc-login {
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 60%, #0f766e 100%) !important;
+  border: none !important;
+}
+
+.pf-v5-c-form-control,
+#username,
+#password {
+  border-radius: 10px !important;
+}
