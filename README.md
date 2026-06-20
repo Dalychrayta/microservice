@@ -16,6 +16,7 @@
 - [Endpoints API](#endpoints-api)
 - [Communication entre microservices](#communication-entre-microservices)
 - [Sécurité Keycloak](#sécurité-keycloak)
+- [CI/CD GitHub Actions](#cicd-github-actions)
 
 ---
 
@@ -367,6 +368,36 @@ rental-service annule réservation
 - `rental-service` valide aussi le JWT et protège ses méthodes avec `@PreAuthorize`.
 - `vehicle-service` valide aussi le JWT côté .NET et convertit les rôles Keycloak depuis `realm_access.roles` vers les rôles ASP.NET, ce qui permet à `[Authorize(Roles = "ADMIN")]` de fonctionner.
 - Les endpoints de catalogue véhicule restent publics, mais les opérations d'administration restent protégées.
+
+### Theme Keycloak personnalisé
+
+- Thème login personnalisé: `carrental-modern`
+- Fichiers du thème: `keycloak/themes/carrental-modern/login/`
+- Activation dans le realm: `loginTheme: "carrental-modern"` dans `keycloak/realm-export.json`
+- Montage Docker du thème: `./keycloak/themes:/opt/keycloak/themes` dans `docker-compose.yml`
+
+Si Keycloak a déjà été lancé avant ce changement, réinitialiser la DB Keycloak pour re-importer le realm:
+
+```bash
+docker-compose down
+docker volume rm webdistribue_keycloak-data
+docker-compose up -d --build
+```
+
+---
+
+## CI/CD GitHub Actions
+
+Workflow: `.github/workflows/ci.yml`
+
+- Job Java: build `config-server`, `eureka-server`, `gateway`, `rental-service`
+- Job .NET: restore + build `vehicle-service`
+- Job Frontend: install + build `frontend`
+
+Déclenchement:
+
+- `push` sur `main` et `rent-car`
+- `pull_request` vers `main` et `rent-car`
 
 ---
 
