@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { getVehicleById } from '../api/vehicleApi'
 import { createRental } from '../api/rentalApi'
@@ -22,6 +22,7 @@ export default function RentalFormPage({ keycloak }) {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState(null)
   const [success, setSuccess] = useState(false)
+  const submitLock = useRef(false)
 
   // Données du formulaire
   const [form, setForm] = useState({
@@ -47,11 +48,14 @@ export default function RentalFormPage({ keycloak }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+    if (submitLock.current) return
+
     if (days <= 0) {
       setError('La date de fin doit être après la date de début.')
       return
     }
 
+    submitLock.current = true
     setSubmitting(true)
     setError(null)
 
@@ -65,9 +69,17 @@ export default function RentalFormPage({ keycloak }) {
       setSuccess(true)
       setTimeout(() => navigate('/my-rentals'), 2000)
     } catch (err) {
-      setError(err.response?.data?.message || 'Erreur lors de la réservation.')
+      const payload = err.response?.data
+      const backendMessage =
+        (typeof payload === 'string' && payload) ||
+        payload?.message ||
+        payload?.error ||
+        null
+
+      setError(backendMessage || 'Erreur lors de la réservation.')
     } finally {
       setSubmitting(false)
+      submitLock.current = false
     }
   }
 
@@ -181,7 +193,7 @@ export default function RentalFormPage({ keycloak }) {
         )}
 
         {error && (
-          <div className="bg-red-50 border border-red-200 text-red-600 rounded-lg p-3 text-sm">
+          <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg p-3 text-sm font-semibold">
             ⚠️ {error}
           </div>
         )}

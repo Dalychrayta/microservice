@@ -5,7 +5,16 @@ const rentalAxios = axios.create({
   baseURL: 'http://localhost:8080/api/rentals'
 })
 
-rentalAxios.interceptors.request.use(config => {
+rentalAxios.interceptors.request.use(async config => {
+  if (keycloak?.authenticated) {
+    try {
+      // Ensure token is ready/valid, especially just after login redirect.
+      await keycloak.updateToken(30)
+    } catch {
+      // If refresh fails, backend will return 401 and caller handles it.
+    }
+  }
+
   if (keycloak?.token) {
     config.headers.Authorization = `Bearer ${keycloak.token}`
   }
@@ -15,11 +24,20 @@ rentalAxios.interceptors.request.use(config => {
 rentalAxios.interceptors.response.use(
   response => response,
   async error => {
-    if (error.response?.status === 401 && keycloak?.isTokenExpired()) {
+    const originalRequest = error.config
+
+    if (
+      error.response?.status === 401 &&
+      originalRequest &&
+      !originalRequest._retry &&
+      keycloak?.authenticated
+    ) {
+      originalRequest._retry = true
       await keycloak.updateToken(30)
-      error.config.headers.Authorization = `Bearer ${keycloak.token}`
-      return rentalAxios(error.config)
+      originalRequest.headers.Authorization = `Bearer ${keycloak.token}`
+      return rentalAxios(originalRequest)
     }
+
     return Promise.reject(error)
   }
 )

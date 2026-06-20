@@ -6,11 +6,20 @@ const vehicleAxios = axios.create({
 })
 
 // Only add token on requests that need auth (admin routes)
-vehicleAxios.interceptors.request.use(config => {
+vehicleAxios.interceptors.request.use(async config => {
   const needsAuth = config.url && (
     config.url.includes('/admin') ||
     config.method !== 'get'
   )
+
+  if (needsAuth && keycloak?.authenticated) {
+    try {
+      await keycloak.updateToken(30)
+    } catch {
+      // Let request continue; backend auth response is handled by caller.
+    }
+  }
+
   if (needsAuth && keycloak?.token) {
     config.headers.Authorization = `Bearer ${keycloak.token}`
   }

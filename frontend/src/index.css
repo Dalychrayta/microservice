@@ -2,25 +2,33 @@
 @tailwind components;
 @tailwind utilities;
 
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap');
+
 /* Styles globaux */
 body {
-  @apply bg-gray-50 text-gray-900;
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  @apply text-gray-900;
+  font-family: 'Space Grotesk', system-ui, -apple-system, sans-serif;
+  background:
+    radial-gradient(circle at 10% 20%, rgba(37, 99, 235, 0.08), transparent 35%),
+    radial-gradient(circle at 80% 0%, rgba(16, 185, 129, 0.08), transparent 25%),
+    linear-gradient(120deg, #f8fafc 0%, #eef2ff 100%);
+  min-height: 100vh;
 }
 
 /* Classe utilitaire pour les cartes */
 .card {
-  @apply bg-white rounded-2xl shadow-md hover:shadow-xl transition-shadow duration-300;
+  @apply bg-white/90 backdrop-blur-sm rounded-2xl shadow-lg border border-white/60 hover:shadow-2xl transition-all duration-300;
 }
 
 /* Bouton primaire */
 .btn-primary {
-  @apply bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed;
+  @apply text-white font-semibold py-2 px-4 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed;
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 60%, #0f766e 100%);
 }
 
 /* Bouton secondaire */
 .btn-secondary {
-  @apply bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded-lg transition-colors duration-200;
+  @apply bg-white hover:bg-gray-50 text-gray-800 font-semibold py-2 px-4 rounded-lg transition-colors duration-200 border border-gray-200;
 }
 
 /* Badge de statut */

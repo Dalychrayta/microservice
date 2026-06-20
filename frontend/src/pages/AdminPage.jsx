@@ -67,7 +67,10 @@ export default function AdminPage() {
 
   const handleCancelRental = async (id) => {
     if (!confirm('Annuler cette réservation ?')) return
-    try { await cancelRental(id); refreshData() }
+    try {
+      await cancelRental(id)
+      setRentals(prev => prev.filter(r => r.id !== id))
+    }
     catch { alert('Erreur lors de l\'annulation.') }
   }
 

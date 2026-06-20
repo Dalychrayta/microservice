@@ -7,7 +7,7 @@ export default function Navbar({ keycloak }) {
   const isAgent = keycloak?.hasRealmRole?.('AGENT')
 
   return (
-    <nav className="bg-blue-700 text-white shadow-lg">
+    <nav className="bg-gradient-to-r from-slate-900 via-blue-900 to-teal-800 text-white shadow-xl border-b border-white/10">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
 
@@ -15,22 +15,22 @@ export default function Navbar({ keycloak }) {
             🚗 <span>CarRent</span>
           </Link>
 
-          <div className="flex items-center gap-6">
-            <Link to="/catalogue" className="hover:text-blue-200 transition-colors">
+          <div className="flex items-center gap-6 text-sm font-medium">
+            <Link to="/catalogue" className="hover:text-cyan-200 transition-colors">
               Catalogue
             </Link>
             {isAuthenticated && !isAdmin && !isAgent && (
-              <Link to="/my-rentals" className="hover:text-blue-200 transition-colors">
+              <Link to="/my-rentals" className="hover:text-cyan-200 transition-colors">
                 Mes réservations
               </Link>
             )}
             {isAdmin && (
-              <Link to="/admin" className="hover:text-blue-200 transition-colors">
+              <Link to="/admin" className="hover:text-cyan-200 transition-colors">
                 Dashboard Admin
               </Link>
             )}
             {isAgent && (
-              <Link to="/agent" className="hover:text-blue-200 transition-colors">
+              <Link to="/agent" className="hover:text-cyan-200 transition-colors">
                 Dashboard Agent
               </Link>
             )}
@@ -43,10 +43,10 @@ export default function Navbar({ keycloak }) {
                   ${isAdmin ? 'bg-red-500' : isAgent ? 'bg-yellow-500' : 'bg-green-500'}`}>
                   {isAdmin ? 'ADMIN' : isAgent ? 'AGENT' : 'CLIENT'}
                 </span>
-                <span className="text-blue-200 text-sm">👤 {username}</span>
+                <span className="text-cyan-100 text-sm">👤 {username}</span>
                 <button
                   onClick={() => keycloak.logout({ redirectUri: window.location.origin })}
-                  className="bg-white text-blue-700 hover:bg-blue-50 font-semibold py-1.5 px-4 rounded-lg text-sm transition-colors"
+                  className="bg-white text-slate-800 hover:bg-cyan-50 font-semibold py-1.5 px-4 rounded-lg text-sm transition-colors"
                 >
                   Se déconnecter
                 </button>
@@ -54,7 +54,7 @@ export default function Navbar({ keycloak }) {
             ) : (
               <button
                 onClick={() => keycloak?.login()}
-                className="bg-white text-blue-700 hover:bg-blue-50 font-semibold py-1.5 px-4 rounded-lg text-sm transition-colors"
+                className="bg-white text-slate-800 hover:bg-cyan-50 font-semibold py-1.5 px-4 rounded-lg text-sm transition-colors"
               >
                 Se connecter
               </button>

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { getAllRentals, confirmRental, cancelRental } from '../api/rentalApi'
+import { getAllVehicles } from '../api/vehicleApi'
 
 /**
  * Dashboard Agent.
@@ -16,6 +17,7 @@ const STATUS_CONFIG = {
 
 export default function AgentPage({ keycloak }) {
   const [rentals, setRentals] = useState([])
+  const [vehicles, setVehicles] = useState([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState('ALL')
 
@@ -25,8 +27,12 @@ export default function AgentPage({ keycloak }) {
 
   const fetchRentals = async () => {
     try {
-      const data = await getAllRentals()
-      setRentals(data)
+      const [rentalData, vehicleData] = await Promise.all([
+        getAllRentals(),
+        getAllVehicles({ available: true })
+      ])
+      setRentals(rentalData)
+      setVehicles(Array.isArray(vehicleData) ? vehicleData : [])
     } finally {
       setLoading(false)
     }
@@ -39,7 +45,10 @@ export default function AgentPage({ keycloak }) {
 
   const handleCancel = async (id) => {
     if (!confirm('Annuler cette réservation ?')) return
-    try { await cancelRental(id); fetchRentals() }
+    try {
+      await cancelRental(id)
+      setRentals(prev => prev.filter(r => r.id !== id))
+    }
     catch { alert('Erreur lors de l\'annulation.') }
   }
 
@@ -82,6 +91,27 @@ export default function AgentPage({ keycloak }) {
             <div className="text-sm text-gray-500">{s.label}</div>
           </div>
         ))}
+      </div>
+
+      {/* Available vehicles */}
+      <div className="card p-5 mb-8">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-bold text-gray-900">🚗 Voitures disponibles</h2>
+          <span className="text-sm text-gray-500">{vehicles.length} disponible(s)</span>
+        </div>
+        {vehicles.length === 0 ? (
+          <p className="text-sm text-gray-500">Aucune voiture disponible pour le moment.</p>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            {vehicles.slice(0, 6).map(v => (
+              <div key={v.id} className="rounded-xl border border-gray-200 p-3 bg-white">
+                <p className="font-semibold text-gray-900">{v.brand} {v.model}</p>
+                <p className="text-xs text-gray-500">{v.category} • {v.year}</p>
+                <p className="text-sm font-semibold text-blue-600 mt-1">{v.pricePerDay?.toLocaleString()} DZD / jour</p>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Filter tabs */}

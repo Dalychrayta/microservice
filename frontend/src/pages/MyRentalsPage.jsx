@@ -39,7 +39,7 @@ export default function MyRentalsPage() {
     if (!confirm('Annuler cette réservation ?')) return
     try {
       await cancelRental(id)
-      fetchRentals() // Rafraîchit la liste
+      setRentals(prev => prev.filter(r => r.id !== id))
     } catch (err) {
       alert('Erreur lors de l\'annulation.')
     }

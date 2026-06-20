@@ -7,6 +7,14 @@ import { useNavigate } from 'react-router-dom'
 export default function VehicleCard({ vehicle, isAuthenticated }) {
   const navigate = useNavigate()
 
+  const categoryEmoji = {
+    SUV: '🚙',
+    Sedan: '🚘',
+    Compact: '🚗',
+    Sport: '🏎️',
+    Électrique: '⚡'
+  }
+
   const handleRent = () => {
     if (!isAuthenticated) {
       alert('Veuillez vous connecter pour réserver une voiture.')
@@ -16,10 +24,10 @@ export default function VehicleCard({ vehicle, isAuthenticated }) {
   }
 
   return (
-    <div className="card overflow-hidden">
+    <div className="card overflow-hidden hover:-translate-y-1">
       {/* Image du véhicule */}
-      <div className="relative h-48 bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center">
-        <span className="text-6xl">🚗</span>
+      <div className="relative h-48 bg-gradient-to-br from-blue-100 via-indigo-100 to-teal-100 flex items-center justify-center">
+        <span className="text-6xl">{categoryEmoji[vehicle.category] || '🚗'}</span>
 
         {/* Badge disponibilité */}
         <span className={`absolute top-3 right-3 badge text-xs font-bold
@@ -34,12 +42,12 @@ export default function VehicleCard({ vehicle, isAuthenticated }) {
       <div className="p-4">
         <div className="flex items-start justify-between mb-2">
           <div>
-            <h3 className="text-lg font-bold text-gray-900">
+            <h3 className="text-lg font-bold text-gray-900 tracking-tight">
               {vehicle.brand} {vehicle.model}
             </h3>
             <p className="text-sm text-gray-500">{vehicle.year} • {vehicle.color}</p>
           </div>
-          <span className="badge bg-blue-100 text-blue-800 text-xs">
+          <span className="badge bg-indigo-100 text-indigo-800 text-xs">
             {vehicle.category}
           </span>
         </div>
@@ -56,7 +64,7 @@ export default function VehicleCard({ vehicle, isAuthenticated }) {
           <button
             onClick={handleRent}
             disabled={!vehicle.available}
-            className="btn-primary text-sm"
+            className="btn-primary text-sm shadow-md"
           >
             {vehicle.available ? 'Réserver' : 'Indisponible'}
           </button>
