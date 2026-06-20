@@ -13,7 +13,3 @@ scrape_configs:
     static_configs:
       - targets: ["rental-service:8081"]
 
-  - job_name: eureka-server-health
-    metrics_path: /actuator/health
-    static_configs:
-      - targets: ["eureka-server:8761"]
