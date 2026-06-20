@@ -81,6 +81,17 @@ public class RentalController {
     }
 
     /**
+     * PUT /api/rentals/{id}/complete
+     * Termine une location confirmée.
+     */
+    @PutMapping("/{id}/complete")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('AGENT')")
+    @Operation(summary = "Terminer une location")
+    public ResponseEntity<RentalResponse> completeRental(@PathVariable Long id) {
+        return ResponseEntity.ok(rentalService.completeRental(id));
+    }
+
+    /**
      * GET /api/rentals/my
      * Récupère les locations du client connecté.
      */

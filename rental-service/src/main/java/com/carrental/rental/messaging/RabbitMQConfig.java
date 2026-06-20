@@ -36,8 +36,10 @@ public class RabbitMQConfig {
     public static final String RENTAL_EXCHANGE = "rental.exchange";
     public static final String RENTAL_CONFIRMED_QUEUE = "rental-confirmed-queue";
     public static final String RENTAL_CANCELLED_QUEUE = "rental-cancelled-queue";
+    public static final String RENTAL_COMPLETED_QUEUE = "rental-completed-queue";
     public static final String RENTAL_CONFIRMED_KEY = "rental.confirmed";
     public static final String RENTAL_CANCELLED_KEY = "rental.cancelled";
+    public static final String RENTAL_COMPLETED_KEY = "rental.completed";
 
     /**
      * Exchange de type "Topic" : le routage se fait par pattern sur la routing key.
@@ -60,6 +62,12 @@ public class RabbitMQConfig {
         return new Queue(RENTAL_CANCELLED_QUEUE, true);
     }
 
+    // Queue pour les locations terminées
+    @Bean
+    public Queue rentalCompletedQueue() {
+        return new Queue(RENTAL_COMPLETED_QUEUE, true);
+    }
+
     // Binding : relie la queue "confirmed" à l'exchange avec la routing key "rental.confirmed"
     @Bean
     public Binding bindingConfirmed(Queue rentalConfirmedQueue, TopicExchange rentalExchange) {
@@ -74,6 +82,14 @@ public class RabbitMQConfig {
         return BindingBuilder.bind(rentalCancelledQueue)
                 .to(rentalExchange)
                 .with(RENTAL_CANCELLED_KEY);
+    }
+
+    // Binding : relie la queue "completed" à la routing key "rental.completed"
+    @Bean
+    public Binding bindingCompleted(Queue rentalCompletedQueue, TopicExchange rentalExchange) {
+        return BindingBuilder.bind(rentalCompletedQueue)
+                .to(rentalExchange)
+                .with(RENTAL_COMPLETED_KEY);
     }
 
     /**

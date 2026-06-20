@@ -57,4 +57,20 @@ public class RentalEventPublisher {
 
         log.info("Rental cancelled event published successfully");
     }
+
+    /**
+     * Publie un événement "location terminée" dans RabbitMQ.
+     * vehicle-service va consommer ce message et remettre la voiture disponible.
+     */
+    public void publishRentalCompleted(RentalEvent event) {
+        log.info("Publishing rental completed event for rental ID: {}", event.getRentalId());
+
+        rabbitTemplate.convertAndSend(
+                RabbitMQConfig.RENTAL_EXCHANGE,
+                RabbitMQConfig.RENTAL_COMPLETED_KEY,
+                event
+        );
+
+        log.info("Rental completed event published successfully");
+    }
 }

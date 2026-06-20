@@ -72,6 +72,9 @@ public class RabbitMQConsumer : BackgroundService
 
             // Écoute la queue "rental-cancelled-queue"
             ConsumeQueue("rental-cancelled-queue", HandleRentalCancelled, stoppingToken);
+
+            // Écoute la queue "rental-completed-queue"
+            ConsumeQueue("rental-completed-queue", HandleRentalCompleted, stoppingToken);
         }
         catch (Exception ex)
         {
@@ -160,6 +163,20 @@ public class RabbitMQConsumer : BackgroundService
         await vehicleService.UpdateAvailabilityAsync(rentalEvent.VehicleId, available: true);
 
         _logger.LogInformation("Vehicle {VehicleId} marked as available again", rentalEvent.VehicleId);
+    }
+
+    private async Task HandleRentalCompleted(RentalEvent rentalEvent)
+    {
+        _logger.LogInformation(
+            "Processing rental completed: RentalId={RentalId}, VehicleId={VehicleId}",
+            rentalEvent.RentalId, rentalEvent.VehicleId);
+
+        using var scope = _scopeFactory.CreateScope();
+        var vehicleService = scope.ServiceProvider.GetRequiredService<VehicleManagementService>();
+
+        await vehicleService.UpdateAvailabilityAsync(rentalEvent.VehicleId, available: true);
+
+        _logger.LogInformation("Vehicle {VehicleId} marked as available after completion", rentalEvent.VehicleId);
     }
 
     /// <summary>

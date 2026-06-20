@@ -31,16 +31,12 @@ public class SecurityConfig {
     @Value("${spring.security.oauth2.resourceserver.jwt.jwk-set-uri}")
     private String jwkSetUri;
 
+    @Value("${spring.security.oauth2.resourceserver.jwt.expected-issuer}")
+    private String expectedIssuer;
+
     /**
      * Custom JWT decoder that validates signature via JWK Set
-     * but does NOT validate the issuer claim.
-     *
-     * This is needed because the token's iss = http://localhost:8180/realms/car-rental
-     * (from the browser's perspective) but the gateway runs inside Docker and
-     * would try to validate against http://keycloak:8180/realms/car-rental — mismatch.
-     *
-     * By using jwk-set-uri directly and only applying timestamp validators,
-     * we skip issuer validation entirely.
+     * and enforces a strict issuer check.
      */
     @Bean
     public ReactiveJwtDecoder jwtDecoder() {
@@ -48,9 +44,8 @@ public class SecurityConfig {
             .withJwkSetUri(jwkSetUri)
             .build();
 
-        // Only validate expiry and not-before — skip issuer validation
-        OAuth2TokenValidator<Jwt> withoutIssuer = JwtValidators.createDefault();
-        decoder.setJwtValidator(withoutIssuer);
+        OAuth2TokenValidator<Jwt> validator = JwtValidators.createDefaultWithIssuer(expectedIssuer);
+        decoder.setJwtValidator(validator);
 
         return decoder;
     }
@@ -64,11 +59,14 @@ public class SecurityConfig {
                 .pathMatchers(
                     "/actuator/**",
                     "/swagger-ui/**", "/swagger-ui.html",
-                    "/v3/api-docs/**", "/webjars/**",
-                    "/api/vehicles", "/api/vehicles/**"
+                    "/v3/api-docs/**", "/webjars/**"
                 ).permitAll()
-                .pathMatchers("/api/vehicles/admin/**").hasRole("ADMIN")
+                .pathMatchers(HttpMethod.GET, "/api/vehicles", "/api/vehicles/**").permitAll()
+                .pathMatchers(HttpMethod.POST, "/api/vehicles", "/api/vehicles/**").hasRole("ADMIN")
+                .pathMatchers(HttpMethod.PUT, "/api/vehicles", "/api/vehicles/**").hasRole("ADMIN")
+                .pathMatchers(HttpMethod.DELETE, "/api/vehicles", "/api/vehicles/**").hasRole("ADMIN")
                 .pathMatchers("/api/rentals/*/confirm").hasAnyRole("ADMIN", "AGENT")
+                .pathMatchers("/api/rentals/*/complete").hasAnyRole("ADMIN", "AGENT")
                 .anyExchange().authenticated()
             )
             .oauth2ResourceServer(oauth2 -> oauth2

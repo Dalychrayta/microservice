@@ -63,6 +63,18 @@ public class RentalService {
         if (days <= 0) {
             throw new RuntimeException("End date must be after start date");
         }
+
+        boolean hasOverlap = rentalRepository
+            .existsByVehicleIdAndStatusInAndStartDateLessThanEqualAndEndDateGreaterThanEqual(
+                request.getVehicleId(),
+                List.of(RentalStatus.PENDING, RentalStatus.CONFIRMED),
+                request.getEndDate(),
+                request.getStartDate()
+            );
+        if (hasOverlap) {
+            throw new RuntimeException("Ce véhicule est déjà réservé sur cette période.");
+        }
+
         double totalPrice = days * vehicle.getPricePerDay();
 
         // ÉTAPE 4 : Création et sauvegarde en base MySQL
@@ -149,6 +161,37 @@ public class RentalService {
                 .build();
 
         eventPublisher.publishRentalCancelled(event);
+
+        VehicleResponse vehicle = vehicleClient.getVehicleById(rental.getVehicleId());
+        return buildResponse(rental, vehicle);
+    }
+
+    /**
+     * Termine une location confirmée et publie un event
+     * pour libérer la voiture côté vehicle-service.
+     */
+    public RentalResponse completeRental(Long rentalId) {
+        Rental rental = rentalRepository.findById(rentalId)
+                .orElseThrow(() -> new RuntimeException("Rental not found: " + rentalId));
+
+        if (rental.getStatus() != RentalStatus.CONFIRMED) {
+            throw new RuntimeException("Only CONFIRMED rentals can be completed");
+        }
+
+        rental.setStatus(RentalStatus.COMPLETED);
+        rental = rentalRepository.save(rental);
+
+        RentalEvent event = RentalEvent.builder()
+                .rentalId(rental.getId())
+                .vehicleId(rental.getVehicleId())
+                .customerId(rental.getCustomerId())
+                .customerName(rental.getCustomerName())
+                .startDate(rental.getStartDate())
+                .endDate(rental.getEndDate())
+                .eventType("COMPLETED")
+                .build();
+
+        eventPublisher.publishRentalCompleted(event);
 
         VehicleResponse vehicle = vehicleClient.getVehicleById(rental.getVehicleId());
         return buildResponse(rental, vehicle);
