@@ -1,0 +1,33 @@
+# Maven
+**/target/
+**/pom.xml.tag
+**/pom.xml.releaseBackup
+**/.mvn/
+
+# .NET
+**/bin/
+**/obj/
+**/*.user
+**/*.suo
+
+# Node / React
+**/node_modules/
+**/dist/
+**/.env.local
+.env
+**/.env
+
+# IDE
+.vscode/
+.idea/
+*.iml
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+**/.dockerignore

@@ -1,0 +1,107 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: gateway
+
+  # Récupère la config depuis le Config Server
+  config:
+    import: optional:configserver:http://config-server:8888
+
+  cloud:
+    gateway:
+      # Active la découverte automatique via Eureka
+      # Permet d'utiliser lb://nom-du-service dans les routes
+      discovery:
+        locator:
+          enabled: true
+          lower-case-service-id: true  # vehicle-service au lieu de VEHICLE-SERVICE
+
+      routes:
+        - id: vehicle-service
+          uri: lb://vehicle-service
+          predicates:
+            - Path=/api/vehicles/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: vehicle-service-circuit-breaker
+                fallbackUri: forward:/fallback/vehicle
+
+        - id: rental-service
+          uri: lb://rental-service
+          predicates:
+            - Path=/api/rentals/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: rental-service-circuit-breaker
+                fallbackUri: forward:/fallback/rental
+
+        - id: rental-service-docs
+          uri: lb://rental-service
+          predicates:
+            - Path=/v3/api-docs/rental-service
+          filters:
+            - RewritePath=/v3/api-docs/rental-service, /v3/api-docs
+
+        - id: vehicle-service-docs
+          uri: lb://vehicle-service
+          predicates:
+            - Path=/v3/api-docs/vehicle-service
+          filters:
+            - RewritePath=/v3/api-docs/vehicle-service, /swagger/v1/swagger.json
+
+      # Configuration globale des filtres
+      default-filters:
+        # Ajoute un header X-Response-Time à toutes les réponses
+        - AddResponseHeader=X-Response-By, CarRental-Gateway
+
+  # ─────────────────────────────────────────
+  # SÉCURITÉ : OAuth2 Resource Server + Keycloak
+  # ─────────────────────────────────────────
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          # jwk-set-uri only — no issuer validation
+          # Token issuer is localhost:8180 but gateway resolves keycloak:8180 (Docker internal)
+          # Using issuer-uri causes 401 due to hostname mismatch
+          jwk-set-uri: http://keycloak:8180/realms/car-rental/protocol/openid-connect/certs
+
+# Eureka
+eureka:
+  client:
+    service-url:
+      defaultZone: http://eureka-server:8761/eureka/
+  instance:
+    prefer-ip-address: true
+
+# Actuator
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,gateway
+  endpoint:
+    gateway:
+      enabled: true  # Expose les routes de la Gateway via /actuator/gateway/routes
+
+# Swagger centralisé sur la Gateway
+springdoc:
+  swagger-ui:
+    # URL principale du Swagger UI
+    path: /swagger-ui.html
+    # Désactive la génération auto de la doc depuis la Gateway elle-même
+    # On veut seulement agréger les docs des MS
+    config-url: /v3/api-docs/swagger-config
+    # Les URLs des MS sont définies dans SwaggerConfig.java
+  api-docs:
+    enabled: true
+
+# Logging
+logging:
+  level:
+    org.springframework.cloud.gateway: DEBUG  # Voir les routes en détail
+    com.carrental.gateway: INFO

@@ -1,0 +1,31 @@
+server:
+  port: 8888
+
+spring:
+  application:
+    name: config-server
+
+  # CRUCIAL : active le profil "native" pour utiliser les fichiers locaux
+  # Sans cette ligne, Spring Cloud Config cherche un dépôt Git
+  profiles:
+    active: native
+
+  cloud:
+    config:
+      server:
+        native:
+          # Chemin vers les fichiers de config dans le classpath
+          search-locations: classpath:/config-repo
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://eureka-server:8761/eureka/
+  instance:
+    prefer-ip-address: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info

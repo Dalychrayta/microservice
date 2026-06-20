@@ -1,0 +1,27 @@
+server:
+  port: 8761  # Port standard d'Eureka, tous les microservices connaissent ce port par défaut
+
+spring:
+  application:
+    name: eureka-server  # Nom de cette application
+
+eureka:
+  instance:
+    hostname: localhost  # En local c'est localhost, en Docker ce sera le nom du container
+  client:
+    # Ces deux lignes sont TRÈS importantes :
+    # Eureka est lui-même un client Eureka par défaut.
+    # On lui dit de NE PAS s'enregistrer auprès de lui-même
+    # et de NE PAS chercher d'autres services.
+    # Il est le serveur, pas un client.
+    register-with-eureka: false
+    fetch-registry: false
+    service-url:
+      defaultZone: http://${eureka.instance.hostname}:${server.port}/eureka/
+
+  server:
+    # Désactive le mode "protection" en développement.
+    # En production ce serait true.
+    # Ce mode empêche Eureka de supprimer les services
+    # s'il pense que le réseau est en panne.
+    enable-self-preservation: false

@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html>
+  <body>
+    <!--
+      Page silencieuse utilisée par Keycloak.js pour vérifier
+      si l'utilisateur est déjà connecté via une iframe,
+      sans redirection visible pour l'utilisateur.
+    -->
+    <script>
+      parent.postMessage(location.href, location.origin)
+    </script>
+  </body>
+</html>

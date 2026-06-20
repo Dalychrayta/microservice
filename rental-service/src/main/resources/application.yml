@@ -1,0 +1,38 @@
+spring:
+  application:
+    name: rental-service
+
+  # Config Server : récupère la configuration depuis le serveur centralisé
+  config:
+    import: optional:configserver:http://config-server:8888
+
+  # Sécurité OAuth2 : valide les tokens JWT émis par Keycloak
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          # Use jwk-set-uri to avoid issuer hostname mismatch
+          # Token issuer is localhost:8180 but service resolves keycloak:8180 (Docker internal)
+          jwk-set-uri: http://keycloak:8180/realms/car-rental/protocol/openid-connect/certs
+
+# Enregistrement dans Eureka
+eureka:
+  client:
+    service-url:
+      defaultZone: http://eureka-server:8761/eureka/
+  instance:
+    prefer-ip-address: true
+
+# Swagger / OpenAPI
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+
+# Actuator : endpoints de monitoring
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics

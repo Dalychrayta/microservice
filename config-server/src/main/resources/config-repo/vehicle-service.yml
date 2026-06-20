@@ -1,0 +1,9 @@
+# Configuration du vehicle-service (.NET)
+# Ce fichier est servi par le Config Server au vehicle-service au démarrage
+
+server:
+  port: 8082
+
+spring:
+  application:
+    name: vehicle-service
