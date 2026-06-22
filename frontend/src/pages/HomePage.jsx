@@ -14,18 +14,16 @@ export default function HomePage({ keycloak }) {
 
   // Filtres
   const [categoryFilter, setCategoryFilter] = useState('')
-  const [availableOnly, setAvailableOnly] = useState(false)
 
   useEffect(() => {
     fetchVehicles()
-  }, [categoryFilter, availableOnly])
+  }, [categoryFilter])
 
   const fetchVehicles = async () => {
     try {
       setLoading(true)
       const params = {}
       if (categoryFilter) params.category = categoryFilter
-      if (availableOnly) params.available = true
 
       const data = await getAllVehicles(params)
       console.log('API response:', data)
@@ -70,18 +68,6 @@ export default function HomePage({ keycloak }) {
             ))}
           </select>
         </div>
-
-        <label className="flex items-center gap-2 cursor-pointer">
-          <input
-            type="checkbox"
-            checked={availableOnly}
-            onChange={e => setAvailableOnly(e.target.checked)}
-            className="w-4 h-4 text-blue-600 rounded"
-          />
-          <span className="text-sm font-medium text-gray-600">
-            Disponibles uniquement
-          </span>
-        </label>
 
         <span className="ml-auto text-sm text-gray-400">
           {vehicles.length} véhicule(s) trouvé(s)

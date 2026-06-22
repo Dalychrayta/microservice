@@ -2,6 +2,7 @@ package com.carrental.rental.controller;
 
 import com.carrental.rental.dto.RentalRequest;
 import com.carrental.rental.dto.RentalResponse;
+import com.carrental.rental.dto.ReservedDateRangeDto;
 import com.carrental.rental.service.RentalService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -124,4 +125,18 @@ public class RentalController {
     public ResponseEntity<RentalResponse> getRentalById(@PathVariable Long id) {
         return ResponseEntity.ok(rentalService.getRentalById(id));
     }
+
+    /**
+     * GET /api/rentals/vehicle/{vehicleId}/reserved-dates
+     * Récupère toutes les plages de dates réservées pour un véhicule.
+     * Utilisé par le frontend pour afficher les dates bloquées dans le calendrier.
+     * Accessible par tous (pas d'authentification requise).
+     */
+    @GetMapping("/vehicle/{vehicleId}/reserved-dates")
+    @Operation(summary = "Dates réservées pour un véhicule", 
+               description = "Retourne les plages de dates bloquées pour le calendrier du frontend")
+    public ResponseEntity<List<ReservedDateRangeDto>> getReservedDates(@PathVariable Long vehicleId) {
+        return ResponseEntity.ok(rentalService.getReservedDatesByVehicle(vehicleId));
+    }
 }
+

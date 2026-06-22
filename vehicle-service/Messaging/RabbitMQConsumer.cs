@@ -134,8 +134,9 @@ public class RabbitMQConsumer : BackgroundService
     }
 
     /// <summary>
-    /// Traite l'event "location confirmée" :
-    /// met le véhicule comme non disponible.
+    /// Traite l'event "location confirmée".
+    /// NOTE: Disponibilité gérée maintenant par plages de dates côté frontend/rental-service.
+    /// Le booléen Available n'est plus modifié.
     /// </summary>
     private async Task HandleRentalConfirmed(RentalEvent rentalEvent)
     {
@@ -143,12 +144,11 @@ public class RabbitMQConsumer : BackgroundService
             "Processing rental confirmed: RentalId={RentalId}, VehicleId={VehicleId}",
             rentalEvent.RentalId, rentalEvent.VehicleId);
 
-        using var scope = _scopeFactory.CreateScope();
-        var vehicleService = scope.ServiceProvider.GetRequiredService<VehicleManagementService>();
-
-        await vehicleService.UpdateAvailabilityAsync(rentalEvent.VehicleId, available: false);
-
-        _logger.LogInformation("Vehicle {VehicleId} marked as unavailable", rentalEvent.VehicleId);
+        // NOTE: Pas d'appel à UpdateAvailabilityAsync() plus nécessaire
+        // Les dates réservées sont maintenant gérées via rental-service/reserved-dates
+        // et affichées dans le calendrier du frontend
+        _logger.LogInformation("Rental {RentalId} confirmed for vehicle {VehicleId} from {Start} to {End}",
+            rentalEvent.RentalId, rentalEvent.VehicleId, rentalEvent.StartDate, rentalEvent.EndDate);
     }
 
     private async Task HandleRentalCancelled(RentalEvent rentalEvent)
@@ -157,12 +157,9 @@ public class RabbitMQConsumer : BackgroundService
             "Processing rental cancelled: RentalId={RentalId}, VehicleId={VehicleId}",
             rentalEvent.RentalId, rentalEvent.VehicleId);
 
-        using var scope = _scopeFactory.CreateScope();
-        var vehicleService = scope.ServiceProvider.GetRequiredService<VehicleManagementService>();
-
-        await vehicleService.UpdateAvailabilityAsync(rentalEvent.VehicleId, available: true);
-
-        _logger.LogInformation("Vehicle {VehicleId} marked as available again", rentalEvent.VehicleId);
+        // NOTE: Pas d'appel à UpdateAvailabilityAsync() plus nécessaire
+        _logger.LogInformation("Rental {RentalId} cancelled for vehicle {VehicleId}",
+            rentalEvent.RentalId, rentalEvent.VehicleId);
     }
 
     private async Task HandleRentalCompleted(RentalEvent rentalEvent)
@@ -171,12 +168,9 @@ public class RabbitMQConsumer : BackgroundService
             "Processing rental completed: RentalId={RentalId}, VehicleId={VehicleId}",
             rentalEvent.RentalId, rentalEvent.VehicleId);
 
-        using var scope = _scopeFactory.CreateScope();
-        var vehicleService = scope.ServiceProvider.GetRequiredService<VehicleManagementService>();
-
-        await vehicleService.UpdateAvailabilityAsync(rentalEvent.VehicleId, available: true);
-
-        _logger.LogInformation("Vehicle {VehicleId} marked as available after completion", rentalEvent.VehicleId);
+        // NOTE: Pas d'appel à UpdateAvailabilityAsync() plus nécessaire
+        _logger.LogInformation("Rental {RentalId} completed for vehicle {VehicleId}",
+            rentalEvent.RentalId, rentalEvent.VehicleId);
     }
 
     /// <summary>

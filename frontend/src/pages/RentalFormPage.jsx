@@ -3,6 +3,49 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { getVehicleById } from '../api/vehicleApi'
 import { createRental } from '../api/rentalApi'
 
+const WEEK_DAYS = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim']
+
+const toLocalDate = (value) => {
+  if (!value) return null
+  const raw = typeof value === 'string' ? value.slice(0, 10) : value
+  const [year, month, day] = String(raw).split('-').map(Number)
+  if (!year || !month || !day) return null
+  return new Date(year, month - 1, day)
+}
+
+const toIsoDate = (date) => {
+  const y = date.getFullYear()
+  const m = String(date.getMonth() + 1).padStart(2, '0')
+  const d = String(date.getDate()).padStart(2, '0')
+  return `${y}-${m}-${d}`
+}
+
+const startOfDay = (date) => new Date(date.getFullYear(), date.getMonth(), date.getDate())
+
+const eachDayInclusive = (start, end) => {
+  const days = []
+  const current = startOfDay(start)
+  const last = startOfDay(end)
+  while (current <= last) {
+    days.push(new Date(current))
+    current.setDate(current.getDate() + 1)
+  }
+  return days
+}
+
+const getMonthMatrix = (anchorDate) => {
+  const firstDay = new Date(anchorDate.getFullYear(), anchorDate.getMonth(), 1)
+  const startWeekday = (firstDay.getDay() + 6) % 7
+  const gridStart = new Date(firstDay)
+  gridStart.setDate(firstDay.getDate() - startWeekday)
+
+  return Array.from({ length: 42 }, (_, index) => {
+    const date = new Date(gridStart)
+    date.setDate(gridStart.getDate() + index)
+    return date
+  })
+}
+
 /**
  * Page de réservation d'un véhicule.
  * Accessible aux CLIENT connectés.
@@ -22,6 +65,8 @@ export default function RentalFormPage({ keycloak }) {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState(null)
   const [success, setSuccess] = useState(false)
+  const [reservedDates, setReservedDates] = useState([])  // Plages de dates réservées
+  const [calendarMonth, setCalendarMonth] = useState(() => startOfDay(new Date()))
   const submitLock = useRef(false)
 
   // Données du formulaire
@@ -39,12 +84,151 @@ export default function RentalFormPage({ keycloak }) {
     : 0
   const totalPrice = vehicle ? days * vehicle.pricePerDay : 0
 
+  const today = startOfDay(new Date())
+
   useEffect(() => {
-    getVehicleById(id)
-      .then(data => setVehicle(data))
-      .catch(() => setError('Véhicule introuvable.'))
-      .finally(() => setLoading(false))
+    const fetchData = async () => {
+      try {
+        const vehicleData = await getVehicleById(id)
+        setVehicle(vehicleData)
+
+        // Récupère les dates réservées depuis vehicle-service
+        const response = await fetch(`http://localhost:8080/api/vehicles/${id}/reserved-dates`)
+        if (response.ok) {
+          const dates = await response.json()
+          setReservedDates(dates)  // [{ startDate: "2024-07-22", endDate: "2024-07-23" }, ...]
+        }
+      } catch (err) {
+        console.error('Error:', err)
+        setError('Impossible de charger les informations.')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchData()
   }, [id])
+
+  const isDateReserved = (date) => {
+    return reservedDates.some(range => {
+      const rangeStart = toLocalDate(range.startDate)
+      const rangeEnd = toLocalDate(range.endDate)
+      if (!rangeStart || !rangeEnd) return false
+      return startOfDay(date) >= startOfDay(rangeStart) && startOfDay(date) <= startOfDay(rangeEnd)
+    })
+  }
+
+  const isDateInSelectedRange = (date) => {
+    if (!form.startDate) return false
+    const start = toLocalDate(form.startDate)
+    if (!start) return false
+    const end = form.endDate ? toLocalDate(form.endDate) : start
+    return startOfDay(date) >= startOfDay(start) && startOfDay(date) <= startOfDay(end)
+  }
+
+  const hasReservedInside = (start, end) => {
+    return eachDayInclusive(start, end).some(day => isDateReserved(day))
+  }
+
+  const handleCalendarDayClick = (date) => {
+    const normalized = startOfDay(date)
+    if (normalized < today || isDateReserved(normalized)) return
+
+    const clickedIso = toIsoDate(normalized)
+    setError(null)
+
+    if (!form.startDate || form.endDate) {
+      setForm(prev => ({ ...prev, startDate: clickedIso, endDate: '' }))
+      return
+    }
+
+    const start = toLocalDate(form.startDate)
+    if (!start) {
+      setForm(prev => ({ ...prev, startDate: clickedIso, endDate: '' }))
+      return
+    }
+
+    if (normalized < startOfDay(start)) {
+      setForm(prev => ({ ...prev, startDate: clickedIso, endDate: '' }))
+      return
+    }
+
+    if (hasReservedInside(start, normalized)) {
+      setError('Cette période inclut des dates déjà réservées. Choisissez une autre plage.')
+      return
+    }
+
+    setForm(prev => ({ ...prev, endDate: clickedIso }))
+  }
+
+  const renderMonth = (monthDate) => {
+    const days = getMonthMatrix(monthDate)
+    const monthLabel = monthDate.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })
+
+    return (
+      <div className="border border-gray-200 rounded-xl p-3 bg-white">
+        <h4 className="text-sm font-semibold text-gray-800 capitalize mb-2">{monthLabel}</h4>
+        <div className="grid grid-cols-7 gap-1 text-center text-xs text-gray-500 mb-1">
+          {WEEK_DAYS.map(day => (
+            <span key={day}>{day}</span>
+          ))}
+        </div>
+        <div className="grid grid-cols-7 gap-1">
+          {days.map((day, index) => {
+            const inCurrentMonth = day.getMonth() === monthDate.getMonth()
+            const isPast = startOfDay(day) < today
+            const reserved = isDateReserved(day)
+            const selected = isDateInSelectedRange(day)
+
+            const className = [
+              'h-9 rounded-md text-sm transition-colors',
+              inCurrentMonth ? 'text-gray-800' : 'text-gray-300',
+              isPast ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : '',
+              reserved ? 'bg-red-100 text-red-700 cursor-not-allowed border border-red-200' : '',
+              selected ? 'bg-blue-600 text-white font-semibold' : '',
+              !isPast && !reserved && !selected ? 'hover:bg-blue-50 cursor-pointer' : ''
+            ].join(' ')
+
+            return (
+              <button
+                key={`${toIsoDate(day)}-${index}`}
+                type="button"
+                onClick={() => handleCalendarDayClick(day)}
+                disabled={isPast || reserved}
+                className={className}
+                title={reserved ? 'Date déjà réservée' : ''}
+              >
+                {day.getDate()}
+              </button>
+            )
+          })}
+        </div>
+      </div>
+    )
+  }
+
+  /**
+   * Vérifie s'il y a chevauchement entre deux plages de dates.
+   */
+  const hasOverlap = (newStart, newEnd, ranges) => {
+    const start = new Date(newStart)
+    const end = new Date(newEnd)
+
+    return ranges.some(range => {
+      const rangeStart = new Date(range.startDate)
+      const rangeEnd = new Date(range.endDate)
+      // Chevauchement si : start <= rangeEnd ET end >= rangeStart
+      return start <= rangeEnd && end >= rangeStart
+    })
+  }
+
+  /**
+   * Formate une date au format "jj/mm/aaaa"
+   */
+  const formatDate = (dateStr) => {
+    const date = new Date(dateStr)
+    return date.toLocaleDateString('fr-FR')
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -52,6 +236,15 @@ export default function RentalFormPage({ keycloak }) {
 
     if (days <= 0) {
       setError('La date de fin doit être après la date de début.')
+      return
+    }
+
+    // ✨ Vérifie s'il y a chevauchement avec les dates réservées
+    if (hasOverlap(form.startDate, form.endDate, reservedDates)) {
+      setError(
+        `⚠️ La période ${formatDate(form.startDate)} au ${formatDate(form.endDate)} ` +
+        `chevauche une réservation existante. Veuillez choisir une autre date.`
+      )
       return
     }
 
@@ -144,34 +337,60 @@ export default function RentalFormPage({ keycloak }) {
           />
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Date de début
-            </label>
-            <input
-              type="date"
-              value={form.startDate}
-              min={new Date().toISOString().split('T')[0]}
-              onChange={e => setForm({ ...form, startDate: e.target.value })}
-              required
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Calendrier de réservation
+          </label>
+
+          <div className="flex items-center justify-between mb-3">
+            <button
+              type="button"
+              onClick={() => {
+                const prev = new Date(calendarMonth)
+                prev.setMonth(prev.getMonth() - 1)
+                setCalendarMonth(startOfDay(prev))
+              }}
+              className="px-3 py-1 rounded-lg border border-gray-200 text-sm hover:bg-gray-50"
+            >
+              ← Mois précédent
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                const next = new Date(calendarMonth)
+                next.setMonth(next.getMonth() + 1)
+                setCalendarMonth(startOfDay(next))
+              }}
+              className="px-3 py-1 rounded-lg border border-gray-200 text-sm hover:bg-gray-50"
+            >
+              Mois suivant →
+            </button>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Date de fin
-            </label>
-            <input
-              type="date"
-              value={form.endDate}
-              min={form.startDate || new Date().toISOString().split('T')[0]}
-              onChange={e => setForm({ ...form, endDate: e.target.value })}
-              required
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {renderMonth(calendarMonth)}
+            {renderMonth(new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() + 1, 1))}
           </div>
+
+          <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="border border-gray-200 rounded-lg px-3 py-2 bg-gray-50">
+              <p className="text-xs text-gray-500">Date de début</p>
+              <p className="font-semibold text-gray-800">
+                {form.startDate ? formatDate(form.startDate) : 'Non sélectionnée'}
+              </p>
+            </div>
+            <div className="border border-gray-200 rounded-lg px-3 py-2 bg-gray-50">
+              <p className="text-xs text-gray-500">Date de fin</p>
+              <p className="font-semibold text-gray-800">
+                {form.endDate ? formatDate(form.endDate) : 'Non sélectionnée'}
+              </p>
+            </div>
+          </div>
+
+          <p className="text-xs text-gray-500 mt-2">
+            Sélection: cliquez une première date (début), puis une deuxième date (fin).
+            Les dates réservées apparaissent en rouge et sont non sélectionnables.
+          </p>
         </div>
 
         {/* Résumé du prix */}
@@ -194,7 +413,7 @@ export default function RentalFormPage({ keycloak }) {
 
         {error && (
           <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg p-3 text-sm font-semibold">
-            ⚠️ {error}
+            {error}
           </div>
         )}
 

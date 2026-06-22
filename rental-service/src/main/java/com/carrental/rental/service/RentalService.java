@@ -52,12 +52,7 @@ public class RentalService {
         // rental-service attend la réponse avant de continuer
         VehicleResponse vehicle = vehicleClient.getVehicleById(request.getVehicleId());
 
-        // ÉTAPE 2 : Vérification de la disponibilité
-        if (!vehicle.isAvailable()) {
-            throw new RuntimeException("Vehicle " + request.getVehicleId() + " is not available");
-        }
-
-        // ÉTAPE 3 : Calcul du prix total
+        // ÉTAPE 2 : Calcul du prix total
         // ChronoUnit.DAYS.between() calcule le nombre de jours entre deux dates
         long days = ChronoUnit.DAYS.between(request.getStartDate(), request.getEndDate());
         if (days <= 0) {
@@ -77,7 +72,7 @@ public class RentalService {
 
         double totalPrice = days * vehicle.getPricePerDay();
 
-        // ÉTAPE 4 : Création et sauvegarde en base MySQL
+        // ÉTAPE 3 : Création et sauvegarde en base MySQL
         Rental rental = Rental.builder()
                 .vehicleId(request.getVehicleId())
                 .customerId(customerId)
@@ -231,6 +226,25 @@ public class RentalService {
                 .orElseThrow(() -> new RuntimeException("Rental not found: " + rentalId));
         VehicleResponse vehicle = vehicleClient.getVehicleById(rental.getVehicleId());
         return buildResponse(rental, vehicle);
+    }
+
+    /**
+     * Récupère toutes les plages de dates réservées pour un véhicule.
+     * Utilisé par vehicle-service pour afficher les dates bloquées dans le calendrier.
+     * Retourne uniquement les réservations PENDING et CONFIRMED
+     * (CANCELLED et COMPLETED ne bloquent pas les futures réservations).
+     */
+    public List<com.carrental.rental.dto.ReservedDateRangeDto> getReservedDatesByVehicle(Long vehicleId) {
+        List<Rental> reservations = rentalRepository.findByVehicleIdAndStatusIn(
+                vehicleId,
+                List.of(RentalStatus.PENDING, RentalStatus.CONFIRMED)
+        );
+        return reservations.stream()
+                .map(rental -> com.carrental.rental.dto.ReservedDateRangeDto.builder()
+                        .startDate(rental.getStartDate())
+                        .endDate(rental.getEndDate())
+                        .build())
+                .collect(Collectors.toList());
     }
 
     /**

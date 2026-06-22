@@ -155,6 +155,10 @@ builder.Services.AddHostedService<RabbitMQConsumer>();
 // ============================================================
 builder.Services.AddScoped<VehicleManagementService>();
 
+// HTTP Client pour appeler rental-service
+builder.Services.AddHttpClient<RentalServiceClient>();
+builder.Services.AddScoped<IRentalServiceClient>(sp => sp.GetRequiredService<RentalServiceClient>());
+
 // CORS handled by the Gateway — do not add it here
 
 // ============================================================

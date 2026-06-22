@@ -40,4 +40,8 @@ public interface RentalRepository extends JpaRepository<Rental, Long> {
             LocalDate endDate,
             LocalDate startDate
     );
+
+    // Récupère toutes les réservations confirméEs et pending pour un véhicule
+    // (pour afficher les dates bloquées dans le calendrier du frontend)
+    List<Rental> findByVehicleIdAndStatusIn(Long vehicleId, List<RentalStatus> statuses);
 }

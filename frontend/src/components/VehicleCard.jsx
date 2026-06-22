@@ -2,7 +2,8 @@ import { useNavigate } from 'react-router-dom'
 
 /**
  * Carte d'un véhicule dans le catalogue.
- * Affiche les infos et un bouton "Réserver" si disponible.
+ * Affiche les infos et un bouton "Réserver".
+ * La disponibilité réelle est gérée par les dates dans le formulaire de réservation.
  */
 export default function VehicleCard({ vehicle, isAuthenticated }) {
   const navigate = useNavigate()
@@ -29,12 +30,9 @@ export default function VehicleCard({ vehicle, isAuthenticated }) {
       <div className="relative h-48 bg-gradient-to-br from-blue-100 via-indigo-100 to-teal-100 flex items-center justify-center">
         <span className="text-6xl">{categoryEmoji[vehicle.category] || '🚗'}</span>
 
-        {/* Badge disponibilité */}
-        <span className={`absolute top-3 right-3 badge text-xs font-bold
-          ${vehicle.available
-            ? 'bg-green-100 text-green-800'
-            : 'bg-red-100 text-red-800'}`}>
-          {vehicle.available ? '✓ Disponible' : '✗ Indisponible'}
+        {/* Badge réservation par dates */}
+        <span className="absolute top-3 right-3 badge text-xs font-bold bg-blue-100 text-blue-800">
+          📅 Réservable selon dates
         </span>
       </div>
 
@@ -63,10 +61,9 @@ export default function VehicleCard({ vehicle, isAuthenticated }) {
 
           <button
             onClick={handleRent}
-            disabled={!vehicle.available}
             className="btn-primary text-sm shadow-md"
           >
-            {vehicle.available ? 'Réserver' : 'Indisponible'}
+            Réserver
           </button>
         </div>
       </div>

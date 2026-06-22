@@ -21,13 +21,16 @@ namespace VehicleService.Controllers;
 public class VehiclesController : ControllerBase
 {
     private readonly VehicleManagementService _vehicleService;
+    private readonly IRentalServiceClient _rentalServiceClient;
     private readonly ILogger<VehiclesController> _logger;
 
     public VehiclesController(
         VehicleManagementService vehicleService,
+        IRentalServiceClient rentalServiceClient,
         ILogger<VehiclesController> logger)
     {
         _vehicleService = vehicleService;
+        _rentalServiceClient = rentalServiceClient;
         _logger = logger;
     }
 
@@ -120,4 +123,28 @@ public class VehiclesController : ControllerBase
 
         return NoContent();
     }
+
+    /// <summary>
+    /// GET /api/vehicles/{id}/reserved-dates
+    /// Récupère les plages de dates réservées pour un véhicule.
+    /// Utilisé par le frontend pour afficher les dates bloquées dans le calendrier.
+    /// Accessible par tous (pas d'authentification requise).
+    /// </summary>
+    [HttpGet("{id}/reserved-dates")]
+    [AllowAnonymous]
+    public async Task<ActionResult<List<ReservedDateRangeDto>>> GetReservedDates(long id)
+    {
+        try
+        {
+            var reservedDates = await _rentalServiceClient.GetReservedDatesAsync(id);
+            return Ok(reservedDates);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error fetching reserved dates for vehicle {VehicleId}", id);
+            // Retourne une liste vide en cas d'erreur plutôt que d'échouer
+            return Ok(new List<ReservedDateRangeDto>());
+        }
+    }
 }
+
