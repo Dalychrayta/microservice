@@ -422,11 +422,23 @@ Workflow: `.github/workflows/ci.yml`
 - Job Java: build `config-server`, `eureka-server`, `gateway`, `rental-service`
 - Job .NET: restore + build `vehicle-service`
 - Job Frontend: install + build `frontend`
+- Job CD: build + publish Docker images vers `ghcr.io` pour `config-server`, `eureka-server`, `gateway`, `rental-service`, `vehicle-service`, `frontend`
 
 Déclenchement:
 
 - `push` sur `main` et `rent-car`
 - `pull_request` vers `main` et `rent-car`
+
+Comportement:
+
+- Sur `pull_request` : exécute uniquement la CI (compilation/validation)
+- Sur `push` : exécute la CI puis publie automatiquement les images Docker sur GitHub Container Registry
+
+Exemples d'images publiées:
+
+- `ghcr.io/<owner>/microservice-gateway`
+- `ghcr.io/<owner>/microservice-rental-service`
+- `ghcr.io/<owner>/microservice-vehicle-service`
 
 ---
 
